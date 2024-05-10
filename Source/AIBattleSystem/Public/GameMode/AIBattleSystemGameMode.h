@@ -13,6 +13,12 @@ class AAIBattleSystemGameMode : public AGameModeBase
 
 public:
 	AAIBattleSystemGameMode();
+
+public:
+	uint32 GetSeed() { m_Seed += 1; return m_Seed; };
+
+private:
+	uint32 m_Seed;
 };
 
 

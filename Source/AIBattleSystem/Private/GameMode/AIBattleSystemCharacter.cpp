@@ -11,6 +11,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "GameMode/AIBattleController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Kismet/KismetArrayLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameMode/AIBattleSystemGameMode.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -53,11 +58,11 @@ AAIBattleSystemCharacter::AAIBattleSystemCharacter()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
 
-	AIPerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("AIPerceptionStimuliSource"));
+	m_AIPerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("AIPerceptionStimuliSource"));
 
 	// Add the Sight stimulus to the AIPerceptionStimuliSourceComponent
-	AIPerceptionStimuliSource->bAutoRegister = true;
-	AIPerceptionStimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+	m_AIPerceptionStimuliSource->bAutoRegister = true;
+	m_AIPerceptionStimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
 }
 
 void AAIBattleSystemCharacter::BeginPlay()
@@ -73,6 +78,61 @@ void AAIBattleSystemCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+}
+
+void AAIBattleSystemCharacter::Tick(float DeltaSeconds)
+{
+	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
+	if (IsValid(pCtrl))
+	{
+		TickAI(pCtrl, DeltaSeconds);
+	}
+}
+
+void AAIBattleSystemCharacter::PossessedBy(AController* NewController)
+{
+	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
+	if (IsValid(pCtrl))
+	{
+		AAIBattleSystemGameMode* pGM = Cast<AAIBattleSystemGameMode>(GetWorld()->GetAuthGameMode());
+		if (IsValid(pGM))
+		{
+			int32 seed = pGM->GetSeed();
+			m_Stream.Initialize(seed);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("AI Seed = %d"), seed));
+		}
+		else
+		{
+			m_Stream.Initialize(0);
+		}
+	}
+}
+
+void AAIBattleSystemCharacter::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
+{
+	if (IsValid(pCtrl->GetBlackboardComponent()) == false)
+		return;
+
+	EN_AIState aistate = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
+	switch (aistate)
+	{
+	case EN_AIState::Patrol: {
+
+	}	break;
+	case EN_AIState::Chase: {
+
+	}	break;
+	case EN_AIState::Battle: {
+		if (m_Skills.IsEmpty() == true)
+			break;
+
+		int32 randNum = m_Stream.RandRange(0, m_Skills.Num());
+
+	}	break;
+	default: {
+
+	}}
 }
 
 //////////////////////////////////////////////////////////////////////////

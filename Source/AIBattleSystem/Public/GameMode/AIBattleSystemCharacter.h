@@ -55,7 +55,21 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	// To add mapping context
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
+
+	/**
+	 *	Function called every frame on this Actor. Override this function to implement custom logic to be executed every frame.
+	 *	Note that Tick is disabled by default, and you will need to check PrimaryActorTick.bCanEverTick is set to true to enable it.
+	 *
+	 *	@param	DeltaSeconds	Game time elapsed during last frame modified by the time dilation
+	 */
+	virtual void Tick(float DeltaSeconds) override;
+
+	/**
+	 * Called when this Pawn is possessed. Only called on the server (or in standalone).
+	 * @param NewController The controller possessing this pawn
+	 */
+	virtual void PossessedBy(AController* NewController) override;
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -64,7 +78,15 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 public:
+	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
+
+public:
 	UPROPERTY(EditAnywhere)
-	class UAIPerceptionStimuliSourceComponent* AIPerceptionStimuliSource;
+	class UAIPerceptionStimuliSourceComponent* m_AIPerceptionStimuliSource;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<struct FST_AISkill> m_Skills;
+
+	FRandomStream m_Stream;
 };
 
