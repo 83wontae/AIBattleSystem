@@ -78,10 +78,18 @@ void AAIBattleSystemCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
+	if (IsValid(pCtrl))
+	{
+		GetMesh()->GetAnimInstance()->OnMontageEnded.AddDynamic(this, &AAIBattleSystemCharacter::OnEventMontageEnded);
+	}
 }
 
 void AAIBattleSystemCharacter::Tick(float DeltaSeconds)
 {
+	Super::Tick(DeltaSeconds);
+
 	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
 	if (IsValid(pCtrl))
 	{
@@ -91,6 +99,8 @@ void AAIBattleSystemCharacter::Tick(float DeltaSeconds)
 
 void AAIBattleSystemCharacter::PossessedBy(AController* NewController)
 {
+	Super::PossessedBy(NewController);
+
 	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
 	if (IsValid(pCtrl))
 	{
@@ -113,9 +123,9 @@ void AAIBattleSystemCharacter::TickAI(AAIBattleController* pCtrl, float DeltaSec
 	if (IsValid(pCtrl->GetBlackboardComponent()) == false)
 		return;
 
-	EN_AIState aistate = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
+	m_AI_State = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
-	switch (aistate)
+	switch (m_AI_State)
 	{
 	case EN_AIState::Patrol: {
 
@@ -124,15 +134,24 @@ void AAIBattleSystemCharacter::TickAI(AAIBattleController* pCtrl, float DeltaSec
 
 	}	break;
 	case EN_AIState::Battle: {
+
+		if (GetMesh()->GetAnimInstance()->IsAnyMontagePlaying() == true)
+			break;
+
 		if (m_Skills.IsEmpty() == true)
 			break;
 
-		int32 randNum = m_Stream.RandRange(0, m_Skills.Num());
+		int32 randNum = m_Stream.RandRange(0, m_Skills.Num() - 1);
+		PlayAnimMontage(m_Skills[randNum].Anim);
 
 	}	break;
 	default: {
 
 	}}
+}
+
+void AAIBattleSystemCharacter::OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
 }
 
 //////////////////////////////////////////////////////////////////////////

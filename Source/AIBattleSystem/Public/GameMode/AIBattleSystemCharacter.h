@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AIBattleController.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "AIBattleSystemCharacter.generated.h"
@@ -80,13 +81,19 @@ public:
 public:
 	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
 
+	UFUNCTION()
+	void OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 public:
 	UPROPERTY(EditAnywhere)
 	class UAIPerceptionStimuliSourceComponent* m_AIPerceptionStimuliSource;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<struct FST_AISkill> m_Skills;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (ExposeOnSpawn = "true"))
+	TArray<FST_AISkill> m_Skills;
 
 	FRandomStream m_Stream;
+
+	UPROPERTY(BlueprintReadOnly)
+	EN_AIState m_AI_State;
 };
 

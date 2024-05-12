@@ -74,7 +74,7 @@ public:
 	void EventPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (ExposeOnSpawn = "true"))
 	UBehaviorTree* BehaviorTree;
 
 	UPROPERTY(EditAnywhere)
