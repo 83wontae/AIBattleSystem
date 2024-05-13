@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "AIBattleController.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "AIBattleSystemCharacter.generated.h"
 
 
 UCLASS(config=Game)
-class AAIBattleSystemCharacter : public ACharacter
+class AAIBattleSystemCharacter : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -78,6 +79,18 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+
+	//---[GenericTeamAgentInterface Area]---//
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", Meta = (ExposeOnSpawn = "true"))
+	int32 m_ID;
+
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
+
+protected:
+	FGenericTeamId TeamId;
+
+	//---[AI Skill & Move Area]---//
 public:
 	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
 

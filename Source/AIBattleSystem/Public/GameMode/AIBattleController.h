@@ -69,6 +69,15 @@ public:
 
 	bool InitAI();
 
+	//---[GenericTeamAgentInterface Area]---//
+protected:
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
+public:
+	FGenericTeamId TeamId;
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId;}
+
+	//---[AI Move Area]---//
 public:
 	UFUNCTION(BlueprintCallable)
 	void EventPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);

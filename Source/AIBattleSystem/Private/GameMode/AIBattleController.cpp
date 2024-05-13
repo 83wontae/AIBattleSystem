@@ -8,6 +8,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "GameMode/AIBattleSystemCharacter.h"
 
 AAIBattleController::AAIBattleController()
 {
@@ -21,8 +22,8 @@ AAIBattleController::AAIBattleController()
 	SightConfig->AutoSuccessRangeFromLastSeenLocation = 500.0f;
 
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	//SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	//SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 
 	AIPerception->SetDominantSense(*SightConfig->GetSenseImplementation());
 	AIPerception->ConfigureSense(*SightConfig);
@@ -31,6 +32,12 @@ AAIBattleController::AAIBattleController()
 void AAIBattleController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AAIBattleSystemCharacter* pChar = Cast<AAIBattleSystemCharacter>(GetPawn());
+	if (IsValid(pChar))
+	{
+		TeamId = FGenericTeamId(pChar->m_ID);
+	}
 
 	InitAI();
 }
@@ -51,6 +58,41 @@ bool AAIBattleController::InitAI()
 	// RunBehaviorTree 후 AIPerception 이벤트에 바인딩을 해줘야함
 	AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &AAIBattleController::EventPerceptionUpdated);
 	return true;
+}
+
+ETeamAttitude::Type AAIBattleController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	// Check if Pawn
+	const APawn* OtherPawn = Cast<APawn>(&Other);
+	if (IsValid(OtherPawn) == false)
+	{return ETeamAttitude::Neutral;}
+
+	// Check if Actor implements GenericTeamAgentInterface
+	auto PlayerTI = Cast<IGenericTeamAgentInterface>(&Other);
+	class IGenericTeamAgentInterface* BotTI = Cast<IGenericTeamAgentInterface>(OtherPawn->GetController());
+	if (BotTI == nullptr && PlayerTI == nullptr)//APawn에 있을수도 있고, APawn을 상속한 다른 Class에 있을수 있기 때문에 둘다 채크
+	{return ETeamAttitude::Neutral;}
+
+	// Get Actor's TeamId
+	FGenericTeamId OtherActorTeamId = NULL;//0
+	if (BotTI != nullptr)
+	{OtherActorTeamId = BotTI->GetGenericTeamId();}
+	else if (PlayerTI != nullptr)
+	{OtherActorTeamId = PlayerTI->GetGenericTeamId();}
+
+	// Check If Hostile
+	FGenericTeamId ThisId = GetGenericTeamId();
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("ThisId=%d, OtherId=%d"), ThisId, OtherActorTeamId));
+	if (OtherActorTeamId == ThisId)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Friendly"));
+		return ETeamAttitude::Friendly;
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Hostile"));
+		return ETeamAttitude::Hostile;
+	}
 }
 
 void AAIBattleController::EventPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)

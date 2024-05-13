@@ -101,9 +101,16 @@ void AAIBattleSystemCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	// Set Generic TeamId
+	TeamId = m_ID;
+
 	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
 	if (IsValid(pCtrl))
 	{
+		// Set Generic TeamId
+		pCtrl->TeamId = m_ID;
+
+		// Set AI Random Seed 
 		AAIBattleSystemGameMode* pGM = Cast<AAIBattleSystemGameMode>(GetWorld()->GetAuthGameMode());
 		if (IsValid(pGM))
 		{
