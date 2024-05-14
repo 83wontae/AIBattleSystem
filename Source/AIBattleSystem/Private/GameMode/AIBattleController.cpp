@@ -16,8 +16,8 @@ AAIBattleController::AAIBattleController()
 
 	SightConfig = CreateOptionalDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 
-	SightConfig->SightRadius = 500.0f;
-	SightConfig->LoseSightRadius = 1000.0f;
+	SightConfig->SightRadius = 1500.0f;
+	SightConfig->LoseSightRadius = 2500.0f;
 	SightConfig->PeripheralVisionAngleDegrees = 90.0f;
 	SightConfig->AutoSuccessRangeFromLastSeenLocation = 500.0f;
 

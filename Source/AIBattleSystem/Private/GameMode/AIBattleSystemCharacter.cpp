@@ -109,6 +109,7 @@ void AAIBattleSystemCharacter::PossessedBy(AController* NewController)
 	{
 		// Set Generic TeamId
 		pCtrl->TeamId = m_ID;
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s TeamId = %d"), *pCtrl->GetName(), pCtrl->TeamId));
 
 		// Set AI Random Seed 
 		AAIBattleSystemGameMode* pGM = Cast<AAIBattleSystemGameMode>(GetWorld()->GetAuthGameMode());
