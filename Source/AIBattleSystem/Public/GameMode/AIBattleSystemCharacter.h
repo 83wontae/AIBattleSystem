@@ -97,6 +97,11 @@ public:
 	UFUNCTION()
 	void OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnEventHitNotify();
+
+	void OnEventHitNotify_Implementation();
+
 public:
 	UPROPERTY(EditAnywhere)
 	class UAIPerceptionStimuliSourceComponent* m_AIPerceptionStimuliSource;

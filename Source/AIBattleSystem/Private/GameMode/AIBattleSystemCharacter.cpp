@@ -162,6 +162,11 @@ void AAIBattleSystemCharacter::OnEventMontageEnded(UAnimMontage* Montage, bool b
 {
 }
 
+void AAIBattleSystemCharacter::OnEventHitNotify_Implementation()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 

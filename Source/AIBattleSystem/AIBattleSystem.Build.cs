@@ -10,7 +10,7 @@ public class AIBattleSystem : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput", "AIModule", "GameplayTasks", "UMG" });
 
-        PublicIncludePaths.AddRange(new string[] { "AIBattleSystem", "AIBattleSystem/Public" });
+        PublicIncludePaths.AddRange(new string[] { "AIBattleSystem", "AIBattleSystem/Public", "AIBattleSystem/Tools" });
 
         PrivateIncludePaths.AddRange(new string[] { "AIBattleSystem/Private" });
     }
