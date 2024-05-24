@@ -78,18 +78,19 @@ void AAIBattleSystemCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
-
+	/*
 	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
 	if (IsValid(pCtrl))
 	{
 		GetMesh()->GetAnimInstance()->OnMontageEnded.AddDynamic(this, &AAIBattleSystemCharacter::OnEventMontageEnded);
 	}
+	*/
 }
 
 void AAIBattleSystemCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
+	
 	AAIBattleController* pCtrl = Cast<AAIBattleController>(GetController());
 	if (IsValid(pCtrl))
 	{
@@ -110,22 +111,8 @@ void AAIBattleSystemCharacter::PossessedBy(AController* NewController)
 		// Set Generic TeamId
 		pCtrl->TeamId = m_ID;
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s TeamId = %d"), *pCtrl->GetName(), pCtrl->TeamId));
-
-		// Set AI Random Seed 
-		AAIBattleSystemGameMode* pGM = Cast<AAIBattleSystemGameMode>(GetWorld()->GetAuthGameMode());
-		if (IsValid(pGM))
-		{
-			int32 seed = pGM->GetSeed();
-			m_Stream.Initialize(seed);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("AI Seed = %d"), seed));
-		}
-		else
-		{
-			m_Stream.Initialize(0);
-		}
 	}
 }
-
 void AAIBattleSystemCharacter::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 {
 	if (IsValid(pCtrl->GetBlackboardComponent()) == false)
@@ -133,38 +120,6 @@ void AAIBattleSystemCharacter::TickAI(AAIBattleController* pCtrl, float DeltaSec
 
 	m_AI_State = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
-	switch (m_AI_State)
-	{
-	case EN_AIState::Patrol: {
-
-	}	break;
-	case EN_AIState::Chase: {
-
-	}	break;
-	case EN_AIState::Battle: {
-
-		if (GetMesh()->GetAnimInstance()->IsAnyMontagePlaying() == true)
-			break;
-
-		if (m_Skills.IsEmpty() == true)
-			break;
-
-		int32 randNum = m_Stream.RandRange(0, m_Skills.Num() - 1);
-		PlayAnimMontage(m_Skills[randNum].Anim);
-
-	}	break;
-	default: {
-
-	}}
-}
-
-void AAIBattleSystemCharacter::OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted)
-{
-}
-
-void AAIBattleSystemCharacter::OnEventHitNotify_Implementation()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
 }
 
 //////////////////////////////////////////////////////////////////////////

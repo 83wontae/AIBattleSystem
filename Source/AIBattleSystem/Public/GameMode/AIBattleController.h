@@ -14,46 +14,6 @@ enum class EN_AIState : uint8
 	Battle UMETA(Display = "Battle"),
 };
 
-UENUM(BlueprintType)
-enum class EN_SkillType : uint8
-{
-	Active UMETA(Display = "Active"),
-	Passive UMETA(Display = "Passive"),
-	Buff UMETA(Display = "Buff"),
-};
-
-// struct 이름 앞에 반드시 F가 붙어야함
-USTRUCT(BlueprintType)
-struct FST_AISkill : public FTableRowBase
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	FST_AISkill()
-		: Type(EN_SkillType::Active)
-		, Name("")
-		, Anim(nullptr)
-		, StaminaUse(0.0f)
-		, Damage(0.0f)
-	{}
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillData")
-	EN_SkillType Type;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillData")
-	FString Name;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillData")
-	UAnimMontage* Anim;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillData")
-	float StaminaUse;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillData")
-	float Damage;
-};
-
 /**
  * 
  */

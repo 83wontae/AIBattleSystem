@@ -79,6 +79,8 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+public:
+	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
 
 	//---[GenericTeamAgentInterface Area]---//
 public:
@@ -90,26 +92,9 @@ public:
 protected:
 	FGenericTeamId TeamId;
 
-	//---[AI Skill & Move Area]---//
-public:
-	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
-
-	UFUNCTION()
-	void OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnEventHitNotify();
-
-	void OnEventHitNotify_Implementation();
-
 public:
 	UPROPERTY(EditAnywhere)
 	class UAIPerceptionStimuliSourceComponent* m_AIPerceptionStimuliSource;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (ExposeOnSpawn = "true"))
-	TArray<FST_AISkill> m_Skills;
-
-	FRandomStream m_Stream;
 
 	UPROPERTY(BlueprintReadOnly)
 	EN_AIState m_AI_State;
