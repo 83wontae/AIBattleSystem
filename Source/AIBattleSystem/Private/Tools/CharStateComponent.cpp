@@ -33,3 +33,25 @@ void UCharStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
+void UCharStateComponent::UseCurSta(float sta)
+{
+	m_CurSta -= sta;
+
+	m_CurSta = FMath::Clamp(m_CurSta, 0.0f, GetMaxSta());
+
+	if (Event_UpdateSta.IsBound())
+	{
+		Event_UpdateSta.Broadcast(GetCurSta(), GetMaxSta());
+	}
+}
+
+void UCharStateComponent::SetCurSta(float sta)
+{
+	m_CurSta = sta;
+	
+	if (Event_UpdateSta.IsBound())
+	{
+		Event_UpdateSta.Broadcast(GetCurSta(), GetMaxSta());
+	}
+}
+

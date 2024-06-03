@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "CharStateComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDele_UpdateSta, float, CurSta, float, MaxSta);
+
 // struct 이름 앞에 반드시 F가 붙어야함
 USTRUCT(BlueprintType)
 struct FST_CharState : public FTableRowBase
@@ -72,7 +74,20 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FST_CharState GetBaseState() { return m_BaseState; };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	UFUNCTION(BlueprintCallable)
+	void UseCurSta(float sta);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurSta(float sta);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetCurSta() { return m_CurSta; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetMaxSta() { return m_BaseState.Stamina; };
+
 	float m_CurSta;
 
+	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable)
+	FDele_UpdateSta Event_UpdateSta;
 };

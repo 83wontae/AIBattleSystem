@@ -5,6 +5,7 @@
 #include "GameMode/AIBattleSystemCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameMode/AIBattleSystemGameMode.h"
+#include "Tools/CharStateComponent.h"
 
 // Sets default values for this component's properties
 USkillComponent::USkillComponent()
@@ -75,6 +76,9 @@ void USkillComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 	// ...
 
+	if (IsValid(m_pOwnChar) == false)
+		return;
+
 	AAIBattleController* pCtrl = Cast<AAIBattleController>(m_pOwnChar->GetController());
 	if (IsValid(pCtrl))
 	{
@@ -108,10 +112,9 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 
 		if (m_Skill_ATs.IsEmpty() == true)
 			break;
-
-		int32 randNum = m_Stream.RandRange(0, m_Skill_ATs.Num() - 1);
-		m_pOwnChar->PlayAnimMontage(m_Skill_ATs[randNum]->Anim);
-
+			
+		UseSkill();
+		
 	}	break;
 	default: {
 
@@ -150,5 +153,18 @@ void USkillComponent::SetSkill_AT(TArray<FName> names)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AT_Table is Empty"));
 	}
+}
+
+void USkillComponent::UseSkill()
+{
+	int32 randNum = m_Stream.RandRange(0, m_Skill_ATs.Num() - 1);
+	m_pOwnChar->PlayAnimMontage(m_Skill_ATs[randNum]->Anim);
+
+	// FindComponentByClass ´Â Native ÄÚµå
+	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
+	if (IsValid(charState) == false)
+		return;
+
+	charState->UseCurSta(m_Skill_ATs[randNum]->StaminaUse);
 }
 

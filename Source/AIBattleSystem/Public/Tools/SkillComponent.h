@@ -85,6 +85,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetSkill_AT(TArray<FName> names);
 
+	UFUNCTION(BlueprintCallable)
+	void UseSkill();
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
 	UDataTable* AT_Table;
