@@ -21,7 +21,7 @@
 //////////////////////////////////////////////////////////////////////////
 // AAIBattleSystemCharacter
 
-AAIBattleSystemCharacter::AAIBattleSystemCharacter()
+AAIBattleSystemCharacter::AAIBattleSystemCharacter():m_ID(0), TeamId(FGenericTeamId::NoTeam)
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);

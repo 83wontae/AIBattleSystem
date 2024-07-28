@@ -4,7 +4,7 @@
 #include "Tools/CharStateComponent.h"
 
 // Sets default values for this component's properties
-UCharStateComponent::UCharStateComponent()
+UCharStateComponent::UCharStateComponent():m_CurSta(0), DeltaTime_RecoverPer(0)
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -21,7 +21,6 @@ void UCharStateComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
 }
 
 
@@ -31,6 +30,22 @@ void UCharStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+	UpdateStrRecover(DeltaTime);
+}
+
+void UCharStateComponent::UpdateStrRecover(float DeltaTime)
+{
+	if (GetCurSta() >= GetMaxSta())
+		return;
+
+	DeltaTime_RecoverPer += DeltaTime;
+
+	if (DeltaTime_RecoverPer < 3)
+		return;
+
+	DeltaTime_RecoverPer -= 3;
+
+	SetCurSta(GetCurSta() + GetStaRecoverPerSec());
 }
 
 void UCharStateComponent::UseCurSta(float sta)

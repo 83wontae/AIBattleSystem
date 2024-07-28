@@ -10,7 +10,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "GameMode/AIBattleSystemCharacter.h"
 
-AAIBattleController::AAIBattleController()
+AAIBattleController::AAIBattleController():m_pTargetChar(nullptr)
 {
 	AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 
@@ -118,4 +118,5 @@ void AAIBattleController::EventPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 	GetBlackboardComponent()->SetValueAsEnum("AiState", (uint8)EN_AIState::Chase);
 
 	GetBlackboardComponent()->SetValueAsObject("TargetActor", Actor);
+	m_pTargetChar = pChar;
 }

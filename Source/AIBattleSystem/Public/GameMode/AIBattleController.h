@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EventPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	ACharacter* GetTargetChar() { return m_pTargetChar; };
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (ExposeOnSpawn = "true"))
 	UBehaviorTree* BehaviorTree;
@@ -50,4 +53,6 @@ public:
 	UAIPerceptionComponent* AIPerception;
 
 	class UAISenseConfig_Sight* SightConfig;
+
+	ACharacter* m_pTargetChar;
 };

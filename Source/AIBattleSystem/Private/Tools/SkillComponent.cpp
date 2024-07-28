@@ -48,11 +48,7 @@ void USkillComponent::BeginPlay()
 	}
 
 	// Bind MontageEnded Event
-	AAIBattleController* pCtrl = Cast<AAIBattleController>(m_pOwnChar->GetController());
-	if (IsValid(pCtrl))
-	{
-		m_pOwnChar->GetMesh()->GetAnimInstance()->OnMontageEnded.AddDynamic(this, &USkillComponent::OnEventMontageEnded);
-	}
+	m_pOwnChar->GetMesh()->GetAnimInstance()->OnMontageEnded.AddDynamic(this, &USkillComponent::OnEventMontageEnded);
 
 	// Set AI Random Seed 
 	AAIBattleSystemGameMode* pGM = Cast<AAIBattleSystemGameMode>(GetWorld()->GetAuthGameMode());
@@ -76,7 +72,7 @@ void USkillComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 	// ...
 
-	if (IsValid(m_pOwnChar) == false)
+	if (false == IsValid(m_pOwnChar))
 		return;
 
 	AAIBattleController* pCtrl = Cast<AAIBattleController>(m_pOwnChar->GetController());
@@ -92,7 +88,7 @@ void USkillComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 {
-	if (IsValid(pCtrl->GetBlackboardComponent()) == false)
+	if (false == IsValid(pCtrl->GetBlackboardComponent()))
 		return;
 
 	m_AI_State = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
@@ -107,10 +103,10 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 	}	break;
 	case EN_AIState::Battle: {
 
-		if (m_pOwnChar->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying() == true)
+		if (m_pOwnChar->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
 			break;
 
-		if (m_Skill_ATs.IsEmpty() == true)
+		if (m_Skill_ATs.IsEmpty())
 			break;
 			
 		UseSkill();
@@ -122,20 +118,109 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 	}
 }
 
+bool USkillComponent::CheckUseDefenceSkill()
+{
+	// 상대방이 회피중인지 채크
+	AAIBattleController* pCtrl = Cast<AAIBattleController>(m_pOwnChar->GetController());
+	if (false == IsValid(pCtrl))
+		return false;
+
+	ACharacter* pTargetChar = pCtrl->GetTargetChar();
+	if (false == IsValid(pTargetChar))
+		return false;
+
+	USkillComponent* targetState = pTargetChar->FindComponentByClass<USkillComponent>();
+	if (false == IsValid(targetState))
+		return false;
+
+	if (true == targetState->IsActivatedDefenceSkill())
+		return false;
+
+	return true;
+}
+
 void USkillComponent::OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	if (nullptr == skill_InUse)
+		return;
+
+	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, bInterrupted = %d"), *skill_InUse->Name, bInterrupted);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
+
+	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
+	if (false == IsValid(charState))
+		return;
+
+	charState->UseCurSta(skill_InUse->StaminaUse);
+	skill_InUse = nullptr;
+}
+
+void USkillComponent::OnEventBeginAttack_Implementation()
+{
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
+
+	// 상대방이 회피중인지 채크
+	if (false == CheckUseDefenceSkill())
+		return;
+
+	// Use Defence Skill
+	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
+	if (false == IsValid(charState))
+		return;
+
+	TArray<FST_AISkill*> filterSkills;
+
+	for (FST_AISkill* skill : m_Skill_DFs)
+	{
+		if (skill->StaminaUse > charState->GetCurSta())
+			continue;
+
+		filterSkills.Add(skill);
+	}
+
+	if (true == filterSkills.IsEmpty())
+		return;
+
+	m_pOwnChar->StopAnimMontage();
+
+	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
+	skill_InUse = filterSkills[randNum];
+	// FString context = FString::Printf(TEXT("Activated Defence Skill Name = %s"), *skill_InUse->Name);
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
+	m_pOwnChar->PlayAnimMontage(skill_InUse->Anim);
 }
 
 void USkillComponent::OnEventHitNotify_Implementation()
 {
+	/*
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
 
 	// Defence Skill
-	if (m_Skill_DFs.IsEmpty() == true)
+	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
+	if (false == IsValid(charState))
 		return;
 
-	int32 randNum = m_Stream.RandRange(0, m_Skill_DFs.Num() - 1);
-	m_pOwnChar->PlayAnimMontage(m_Skill_DFs[randNum]->Anim);
+	TArray<FST_AISkill*> filterSkills;
+
+	for (FST_AISkill* skill : m_Skill_DFs)
+	{
+		if (skill->StaminaUse > charState->GetCurSta())
+			continue;
+
+		filterSkills.Add(skill);
+	}
+
+	if (true == filterSkills.IsEmpty())
+		return;
+
+	m_pOwnChar->StopAnimMontage();
+
+	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
+	skill_InUse = filterSkills[randNum];
+	// FString context = FString::Printf(TEXT("Activated Defence Skill Name = %s"), *skill_InUse->Name);
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
+	m_pOwnChar->PlayAnimMontage(skill_InUse->Anim);
+	*/
 }
 
 void USkillComponent::SetSkill_AT(TArray<FName> names)
@@ -157,14 +242,38 @@ void USkillComponent::SetSkill_AT(TArray<FName> names)
 
 void USkillComponent::UseSkill()
 {
-	int32 randNum = m_Stream.RandRange(0, m_Skill_ATs.Num() - 1);
-	m_pOwnChar->PlayAnimMontage(m_Skill_ATs[randNum]->Anim);
-
 	// FindComponentByClass 는 Native 코드
 	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
-	if (IsValid(charState) == false)
+	if (false == IsValid(charState))
 		return;
 
-	charState->UseCurSta(m_Skill_ATs[randNum]->StaminaUse);
+	TArray<FST_AISkill*> filterSkills;
+
+	for (FST_AISkill* skill : m_Skill_ATs)
+	{
+		if (skill->StaminaUse > charState->GetCurSta())
+			continue;
+
+		filterSkills.Add(skill);
+	}
+
+	if (filterSkills.IsEmpty())
+		return;
+
+	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
+	skill_InUse = filterSkills[randNum];
+	// FString context = FString::Printf(TEXT("Activated Attack Skill Name = %s"), *skill_InUse->Name);
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
+	m_pOwnChar->PlayAnimMontage(skill_InUse->Anim);
+}
+
+bool USkillComponent::IsActivatedDefenceSkill()
+{
+	return (skill_InUse->Type == EN_SkillType::Defence);
+}
+
+bool USkillComponent::IsActivatedAttackSkill()
+{
+	return (skill_InUse->Type == EN_SkillType::Attack);
 }
 

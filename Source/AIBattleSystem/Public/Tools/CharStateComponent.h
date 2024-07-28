@@ -59,6 +59,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	void UpdateStrRecover(float DeltaTime);
+
+public:
 	FST_CharState m_BaseState;
 
 	UFUNCTION(BlueprintCallable)
@@ -86,8 +89,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetMaxSta() { return m_BaseState.Stamina; };
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetStaRecoverPerSec() { return m_BaseState.Stamina / 10; };
+
 	float m_CurSta;
 
 	UPROPERTY(BlueprintAssignable, VisibleAnywhere, BlueprintCallable)
 	FDele_UpdateSta Event_UpdateSta;
+
+	// Sta recovery
+	float DeltaTime_RecoverPer;
 };

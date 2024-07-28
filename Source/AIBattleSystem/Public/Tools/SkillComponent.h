@@ -12,7 +12,8 @@
 UENUM(BlueprintType)
 enum class EN_SkillType : uint8
 {
-	Active UMETA(Display = "Active"),
+	Attack UMETA(Display = "Attack"),
+	Defence UMETA(Display = "Defence"),
 	Passive UMETA(Display = "Passive"),
 	Buff UMETA(Display = "Buff"),
 };
@@ -26,7 +27,7 @@ struct FST_AISkill : public FTableRowBase
 public:
 
 	FST_AISkill()
-		: Type(EN_SkillType::Active)
+		: Type(EN_SkillType::Attack)
 		, Name("")
 		, Anim(nullptr)
 		, StaminaUse(0.0f)
@@ -73,8 +74,15 @@ public:
 public:
 	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
 
+	bool CheckUseDefenceSkill();
+
 	UFUNCTION()
 	void OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnEventBeginAttack();
+
+	void OnEventBeginAttack_Implementation();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnEventHitNotify();
@@ -87,6 +95,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void UseSkill();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsActivatedDefenceSkill();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsActivatedAttackSkill();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
@@ -106,4 +120,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	EN_AIState m_AI_State;
+
+	FST_AISkill* skill_InUse;
 };
