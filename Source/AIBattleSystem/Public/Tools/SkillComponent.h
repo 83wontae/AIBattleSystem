@@ -85,6 +85,11 @@ public:
 	void OnEventBeginAttack_Implementation();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnEventBeforeHitNotify();
+
+	void OnEventBeforeHitNotify_Implementation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnEventHitNotify();
 
 	void OnEventHitNotify_Implementation();
@@ -101,6 +106,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool IsActivatedAttackSkill();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	ACharacter* GetTargetCharacter();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")

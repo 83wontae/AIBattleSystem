@@ -6,6 +6,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameMode/AIBattleSystemGameMode.h"
 #include "Tools/CharStateComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values for this component's properties
 USkillComponent::USkillComponent()
@@ -121,11 +122,7 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 bool USkillComponent::CheckUseDefenceSkill()
 {
 	// 상대방이 회피중인지 채크
-	AAIBattleController* pCtrl = Cast<AAIBattleController>(m_pOwnChar->GetController());
-	if (false == IsValid(pCtrl))
-		return false;
-
-	ACharacter* pTargetChar = pCtrl->GetTargetChar();
+	ACharacter* pTargetChar = GetTargetCharacter();
 	if (false == IsValid(pTargetChar))
 		return false;
 
@@ -156,6 +153,10 @@ void USkillComponent::OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupt
 }
 
 void USkillComponent::OnEventBeginAttack_Implementation()
+{
+}
+
+void USkillComponent::OnEventBeforeHitNotify_Implementation()
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
 
@@ -192,35 +193,6 @@ void USkillComponent::OnEventBeginAttack_Implementation()
 
 void USkillComponent::OnEventHitNotify_Implementation()
 {
-	/*
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
-
-	// Defence Skill
-	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
-	if (false == IsValid(charState))
-		return;
-
-	TArray<FST_AISkill*> filterSkills;
-
-	for (FST_AISkill* skill : m_Skill_DFs)
-	{
-		if (skill->StaminaUse > charState->GetCurSta())
-			continue;
-
-		filterSkills.Add(skill);
-	}
-
-	if (true == filterSkills.IsEmpty())
-		return;
-
-	m_pOwnChar->StopAnimMontage();
-
-	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
-	skill_InUse = filterSkills[randNum];
-	// FString context = FString::Printf(TEXT("Activated Defence Skill Name = %s"), *skill_InUse->Name);
-	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
-	m_pOwnChar->PlayAnimMontage(skill_InUse->Anim);
-	*/
 }
 
 void USkillComponent::SetSkill_AT(TArray<FName> names)
@@ -242,6 +214,10 @@ void USkillComponent::SetSkill_AT(TArray<FName> names)
 
 void USkillComponent::UseSkill()
 {
+	ACharacter* pTargetChar = GetTargetCharacter();
+	if (false == IsValid(pTargetChar))
+		return;
+
 	// FindComponentByClass 는 Native 코드
 	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
 	if (false == IsValid(charState))
@@ -260,6 +236,10 @@ void USkillComponent::UseSkill()
 	if (filterSkills.IsEmpty())
 		return;
 
+	// pTargetChar->GetActorLocation();
+	// FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(m_pOwnChar->GetActorLocation(), pTargetChar->GetActorLocation());
+	// m_pOwnChar->SetActorRotation(LookAtRot);
+
 	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
 	skill_InUse = filterSkills[randNum];
 	// FString context = FString::Printf(TEXT("Activated Attack Skill Name = %s"), *skill_InUse->Name);
@@ -275,5 +255,18 @@ bool USkillComponent::IsActivatedDefenceSkill()
 bool USkillComponent::IsActivatedAttackSkill()
 {
 	return (skill_InUse->Type == EN_SkillType::Attack);
+}
+
+ACharacter* USkillComponent::GetTargetCharacter()
+{
+	AAIBattleController* pCtrl = Cast<AAIBattleController>(m_pOwnChar->GetController());
+	if (false == IsValid(pCtrl))
+		return nullptr;
+
+	ACharacter* pTargetChar = pCtrl->GetTargetChar();
+	if (false == IsValid(pTargetChar))
+		return nullptr;
+
+	return pTargetChar;
 }
 
