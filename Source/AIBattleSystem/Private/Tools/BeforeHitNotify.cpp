@@ -28,5 +28,5 @@ void UBeforeHitNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBas
 	if (false == IsValid(skillcomp))
 		return;
 
-	skillcomp->OnEventBeforeHitNotify();
+	skillcomp->OnEventBeforeHitNotify(pChar);
 }

@@ -48,6 +48,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillData")
 	float Damage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillData")
+	TArray<FName> DodgeSkill;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -74,7 +77,11 @@ public:
 public:
 	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
 
-	bool CheckUseDefenceSkill();
+	bool IsUseingDefenceSkill(ACharacter* pChar);
+
+	FST_AISkill* GetUseingSkill();
+
+	FST_AISkill* GetUseingSkill(ACharacter* pChar);
 
 	UFUNCTION()
 	void OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -85,14 +92,14 @@ public:
 	void OnEventBeginAttack_Implementation();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnEventBeforeHitNotify();
+	void OnEventBeforeHitNotify(ACharacter* pAttackChar);
 
-	void OnEventBeforeHitNotify_Implementation();
+	void OnEventBeforeHitNotify_Implementation(ACharacter* pAttackChar);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnEventHitNotify();
+	void OnEventHitNotify(ACharacter* pAttackChar);
 
-	void OnEventHitNotify_Implementation();
+	void OnEventHitNotify_Implementation(ACharacter* pAttackChar);
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -129,5 +136,6 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	EN_AIState m_AI_State;
 
-	FST_AISkill* skill_InUse;
+	// 실행하고 있는 스킬
+	FST_AISkill* stUsingSkill;
 };

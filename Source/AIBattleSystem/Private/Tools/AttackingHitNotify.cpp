@@ -28,5 +28,5 @@ void UAttackingHitNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 	if (false == IsValid(skillcomp))
 		return;
 	
-	skillcomp->OnEventHitNotify();
+	skillcomp->OnEventHitNotify(pChar);
 }

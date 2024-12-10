@@ -119,79 +119,82 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 	}
 }
 
-bool USkillComponent::CheckUseDefenceSkill()
+bool USkillComponent::IsUseingDefenceSkill(ACharacter* pChar)
 {
 	// 상대방이 회피중인지 채크
-	ACharacter* pTargetChar = GetTargetCharacter();
-	if (false == IsValid(pTargetChar))
+	USkillComponent* targetSkillComp = pChar->FindComponentByClass<USkillComponent>();
+	if (false == IsValid(targetSkillComp))
 		return false;
 
-	USkillComponent* targetState = pTargetChar->FindComponentByClass<USkillComponent>();
-	if (false == IsValid(targetState))
-		return false;
-
-	if (true == targetState->IsActivatedDefenceSkill())
+	if (true == targetSkillComp->IsActivatedDefenceSkill())
 		return false;
 
 	return true;
 }
 
+FST_AISkill* USkillComponent::GetUseingSkill()
+{
+	return stUsingSkill;
+}
+
+FST_AISkill* USkillComponent::GetUseingSkill(ACharacter* pChar)
+{
+	USkillComponent* targetSkillComp = pChar->FindComponentByClass<USkillComponent>();
+	if (false == IsValid(targetSkillComp))
+		return nullptr;
+
+	return targetSkillComp->stUsingSkill;
+}
+
 void USkillComponent::OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (nullptr == skill_InUse)
+	if (nullptr == stUsingSkill)
 		return;
 
-	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, bInterrupted = %d"), *skill_InUse->Name, bInterrupted);
+	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, bInterrupted = %d"), *stUsingSkill->Name, bInterrupted);
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
 
 	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
 	if (false == IsValid(charState))
 		return;
 
-	charState->UseCurSta(skill_InUse->StaminaUse);
-	skill_InUse = nullptr;
+	charState->UseCurSta(stUsingSkill->StaminaUse);
+	stUsingSkill = nullptr;
 }
 
 void USkillComponent::OnEventBeginAttack_Implementation()
 {
 }
 
-void USkillComponent::OnEventBeforeHitNotify_Implementation()
+void USkillComponent::OnEventBeforeHitNotify_Implementation(ACharacter* pAttackChar)
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
-
-	// 상대방이 회피중인지 채크
-	if (false == CheckUseDefenceSkill())
-		return;
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnEventHitNotify"));
 
 	// Use Defence Skill
-	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
-	if (false == IsValid(charState))
+	FST_AISkill* pStUseingSkill = GetUseingSkill(pAttackChar);
+
+	if (nullptr == pStUseingSkill)
 		return;
 
-	TArray<FST_AISkill*> filterSkills;
-
-	for (FST_AISkill* skill : m_Skill_DFs)
-	{
-		if (skill->StaminaUse > charState->GetCurSta())
-			continue;
-
-		filterSkills.Add(skill);
-	}
-
-	if (true == filterSkills.IsEmpty())
+	if (true == pStUseingSkill->DodgeSkill.IsEmpty())
 		return;
 
 	m_pOwnChar->StopAnimMontage();
 
-	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
-	skill_InUse = filterSkills[randNum];
+	int32 randNum = m_Stream.RandRange(0, pStUseingSkill->DodgeSkill.Num() - 1);
+	FName skillRowName = pStUseingSkill->DodgeSkill[randNum];
+	FString contextResult;
+	stUsingSkill = DF_Table->FindRow<FST_AISkill>(skillRowName, contextResult);
+
+	if (nullptr == stUsingSkill)
+		return;
+
 	// FString context = FString::Printf(TEXT("Activated Defence Skill Name = %s"), *skill_InUse->Name);
 	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
-	m_pOwnChar->PlayAnimMontage(skill_InUse->Anim);
+	m_pOwnChar->PlayAnimMontage(stUsingSkill->Anim);
 }
 
-void USkillComponent::OnEventHitNotify_Implementation()
+void USkillComponent::OnEventHitNotify_Implementation(ACharacter* pAttackChar)
 {
 }
 
@@ -241,20 +244,20 @@ void USkillComponent::UseSkill()
 	// m_pOwnChar->SetActorRotation(LookAtRot);
 
 	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
-	skill_InUse = filterSkills[randNum];
+	stUsingSkill = filterSkills[randNum];
 	// FString context = FString::Printf(TEXT("Activated Attack Skill Name = %s"), *skill_InUse->Name);
 	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
-	m_pOwnChar->PlayAnimMontage(skill_InUse->Anim);
+	m_pOwnChar->PlayAnimMontage(stUsingSkill->Anim);
 }
 
 bool USkillComponent::IsActivatedDefenceSkill()
 {
-	return (skill_InUse->Type == EN_SkillType::Defence);
+	return (stUsingSkill->Type == EN_SkillType::Defence);
 }
 
 bool USkillComponent::IsActivatedAttackSkill()
 {
-	return (skill_InUse->Type == EN_SkillType::Attack);
+	return (stUsingSkill->Type == EN_SkillType::Attack);
 }
 
 ACharacter* USkillComponent::GetTargetCharacter()
