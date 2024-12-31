@@ -78,7 +78,7 @@ public:
 	FST_CharState GetBaseState() { return m_BaseState; };
 
 	UFUNCTION(BlueprintCallable)
-	void UseCurSta(float sta);
+	bool UseCurSta(float sta);
 
 	UFUNCTION(BlueprintCallable)
 	void SetCurSta(float sta);

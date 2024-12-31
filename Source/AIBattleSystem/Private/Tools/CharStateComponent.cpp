@@ -48,8 +48,11 @@ void UCharStateComponent::UpdateStrRecover(float DeltaTime)
 	SetCurSta(GetCurSta() + GetStaRecoverPerSec());
 }
 
-void UCharStateComponent::UseCurSta(float sta)
+bool UCharStateComponent::UseCurSta(float sta)
 {
+	bool OverSta = false;
+	if (m_CurSta - sta < 0) OverSta = true;
+
 	m_CurSta -= sta;
 
 	m_CurSta = FMath::Clamp(m_CurSta, 0.0f, GetMaxSta());
@@ -58,6 +61,8 @@ void UCharStateComponent::UseCurSta(float sta)
 	{
 		Event_UpdateSta.Broadcast(GetCurSta(), GetMaxSta());
 	}
+
+	return OverSta;
 }
 
 void UCharStateComponent::SetCurSta(float sta)

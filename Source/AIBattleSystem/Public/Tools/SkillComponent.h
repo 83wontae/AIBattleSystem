@@ -142,9 +142,6 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public:
-	ACharacter* m_pOwnChar;
-
 	//---[AI Skill & Move Area]---//
 public:
 	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
@@ -158,6 +155,8 @@ public:
 	FST_SkillAnim* GetSkillAnim(FName Row);
 
 	EN_BattleAnimState CalcDefenseState();
+
+	float GetDefenseStamina(EN_BattleAnimState DefState);
 
 	UFUNCTION()
 	void OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -197,18 +196,14 @@ public:
 	ACharacter* GetTargetCharacter();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
-	UDataTable* SkillTable;
+	ACharacter* m_pOwnChar;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
-	UDataTable* SkillAnimTable;
+	class UCharStateComponent* m_CharState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
 	TArray<FName> SkillList;
 
 	TArray<FST_AISkill*> m_Skill_ATs;
-
-	FRandomStream m_RandStream;
 
 	UPROPERTY(BlueprintReadOnly)
 	EN_AIState m_CurAiState;
@@ -218,4 +213,16 @@ public:
 
 	// 현재 Anim 상태
 	EN_BattleAnimState m_CurAnimState;
+
+	// 낮을 수록 공격 주도권을 같는다.
+	float AttackInitiative = 0;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
+	UDataTable* SkillTable;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
+	UDataTable* SkillAnimTable;
+
+	FRandomStream m_RandStream;
 };

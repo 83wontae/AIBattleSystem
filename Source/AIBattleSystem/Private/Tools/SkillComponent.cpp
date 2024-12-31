@@ -7,6 +7,7 @@
 #include "GameMode/AIBattleSystemGameMode.h"
 #include "Tools/CharStateComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
 USkillComponent::USkillComponent():m_CurAnimState(EN_BattleAnimState::Stand)
@@ -32,24 +33,15 @@ void USkillComponent::BeginPlay()
 	if (IsValid(m_pOwnChar) == false)
 		return;
 
-	SetSkill_AT(SkillList);
-	/*
-	if (IsValid(DF_Table))
-	{
-		TArray<FST_AISkill*> arr;
-		DF_Table->GetAllRows<FST_AISkill>(TEXT("GetAllRows"), arr);
-		for (FST_AISkill* iter : arr)
-		{
-			m_Skill_DFs.Push(iter);
-		}
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("DF_Table is Empty"));
-	}
-	*/
+	m_CharState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
+	if (false == IsValid(m_CharState))
+		return;
+
 	// Bind MontageEnded Event
 	m_pOwnChar->GetMesh()->GetAnimInstance()->OnMontageEnded.AddDynamic(this, &USkillComponent::OnEventMontageEnded);
+
+	// Possession Skill Setting
+	SetSkill_AT(SkillList);
 
 	// Set AI Random Seed 
 	AAIBattleSystemGameMode* pGM = Cast<AAIBattleSystemGameMode>(GetWorld()->GetAuthGameMode());
@@ -181,20 +173,27 @@ EN_BattleAnimState USkillComponent::CalcDefenseState()
 	return EN_BattleAnimState::BigHit;
 }
 
+float USkillComponent::GetDefenseStamina(EN_BattleAnimState DefState)
+{
+	switch (DefState)
+	{
+	case EN_BattleAnimState::Dodge:			{ return 8.0f; }		break;
+	case EN_BattleAnimState::BigDodge:		{ return 16.0f; }		break;
+	case EN_BattleAnimState::Block:			{ return 5.0f; }		break;
+	case EN_BattleAnimState::BigBlock:		{ return 10.0f; }		break;
+	case EN_BattleAnimState::Hit:			{ return 2.0f; }		break;
+	case EN_BattleAnimState::BigHit:		{ return 5.0f; }		break;
+	}
+	return 0.0f;
+}
+
 void USkillComponent::OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (nullptr == m_CurUsingSkill)
 		return;
 
-	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, bInterrupted = %d"), *m_CurUsingSkill->Name, bInterrupted);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
-
-	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
-	if (false == IsValid(charState))
-		return;
-
-	charState->UseCurSta(m_CurUsingSkill->StaminaUse);
 	m_CurUsingSkill = nullptr;
+	m_CurAnimState = EN_BattleAnimState::Stand;
 }
 
 void USkillComponent::OnEventBeginAttack_Implementation(ACharacter* pAttackChar)
@@ -209,12 +208,10 @@ void USkillComponent::OnEventBeginAttack_Implementation(ACharacter* pAttackChar)
 	if (nullptr == pSkillAnim)
 		return;
 
+	m_CurUsingSkill = nullptr;
 	m_pOwnChar->StopAnimMontage();
 
 	UAnimMontage* pDefenseStanceAnimMontage = pSkillAnim->GetSkillAnim(EN_BattleAnimState::DefenseStance);
-
-	m_CurUsingSkill = nullptr;
-
 	m_pOwnChar->PlayAnimMontage(pDefenseStanceAnimMontage);
 }
 
@@ -232,16 +229,18 @@ void USkillComponent::OnEventBeforeHitNotify_Implementation(ACharacter* pAttackC
 	if (nullptr == pSkillAnim)
 		return;
 
+	m_CurUsingSkill = nullptr;
 	m_pOwnChar->StopAnimMontage();
 	
-	EN_BattleAnimState ResultAnimState = CalcDefenseState();
-	UAnimMontage* pAnimMontage = pSkillAnim->GetSkillAnim(ResultAnimState);
+	m_CurAnimState = CalcDefenseState();
+	UAnimMontage* pAnimMontage = pSkillAnim->GetSkillAnim(m_CurAnimState);
+	float useSta = GetDefenseStamina(m_CurAnimState);
+	bool oversta = m_CharState->UseCurSta(useSta);
 
+	
+	FString context = FString::Printf(TEXT("Activated DefenseState = %s, UseSta = %f"), *UEnum::GetValueAsString(m_CurAnimState), useSta);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
 
-	m_CurUsingSkill = nullptr;
-
-	// FString context = FString::Printf(TEXT("Activated Defence Skill Name = %s"), *skill_InUse->Name);
-	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
 	m_pOwnChar->PlayAnimMontage(pAnimMontage);
 }
 
@@ -281,6 +280,18 @@ void USkillComponent::UseSkill()
 	if (false == IsValid(pTargetChar))
 		return;
 
+	// 적이 공격하고 있으면 같이 공격 안함
+	FST_AISkill* pStUseingSkill = GetUseingSkill(pTargetChar);
+	if (pStUseingSkill)
+		return;
+
+	// 공격 주도권 처리
+	if (AttackInitiative > 0)
+	{
+		AttackInitiative--;
+		return;
+	}
+
 	// FindComponentByClass 는 Native 코드
 	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
 	if (false == IsValid(charState))
@@ -311,7 +322,17 @@ void USkillComponent::UseSkill()
 	if (nullptr == pSkillAnim)
 		return;
 
+	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, UseSta = %f"),
+		*m_CurUsingSkill->Name, m_CurUsingSkill->StaminaUse);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
+
+	bool oversta = m_CharState->UseCurSta(m_CurUsingSkill->StaminaUse);
+
 	m_pOwnChar->PlayAnimMontage(pSkillAnim->AttackAnim);
+	m_CurAnimState = EN_BattleAnimState::Attack;
+
+	// 공격 주도권 처리
+	AttackInitiative++;
 }
 
 bool USkillComponent::IsActivatedDefenceSkill()
