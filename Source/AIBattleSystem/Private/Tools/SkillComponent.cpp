@@ -9,7 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values for this component's properties
-USkillComponent::USkillComponent()
+USkillComponent::USkillComponent():m_CurAnimState(EN_BattleAnimState::Stand)
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -32,8 +32,8 @@ void USkillComponent::BeginPlay()
 	if (IsValid(m_pOwnChar) == false)
 		return;
 
-	SetSkill_AT(Skill_AT_Names);
-
+	SetSkill_AT(SkillList);
+	/*
 	if (IsValid(DF_Table))
 	{
 		TArray<FST_AISkill*> arr;
@@ -47,7 +47,7 @@ void USkillComponent::BeginPlay()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("DF_Table is Empty"));
 	}
-
+	*/
 	// Bind MontageEnded Event
 	m_pOwnChar->GetMesh()->GetAnimInstance()->OnMontageEnded.AddDynamic(this, &USkillComponent::OnEventMontageEnded);
 
@@ -56,12 +56,12 @@ void USkillComponent::BeginPlay()
 	if (IsValid(pGM))
 	{
 		int32 seed = pGM->GetSeed();
-		m_Stream.Initialize(seed);
+		m_RandStream.Initialize(seed);
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("AI Seed = %d"), seed));
 	}
 	else
 	{
-		m_Stream.Initialize(0);
+		m_RandStream.Initialize(0);
 	}
 }
 
@@ -92,9 +92,9 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 	if (false == IsValid(pCtrl->GetBlackboardComponent()))
 		return;
 
-	m_AI_State = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
+	m_CurAiState = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
-	switch (m_AI_State)
+	switch (m_CurAiState)
 	{
 	case EN_AIState::Patrol: {
 
@@ -134,7 +134,7 @@ bool USkillComponent::IsUseingDefenceSkill(ACharacter* pChar)
 
 FST_AISkill* USkillComponent::GetUseingSkill()
 {
-	return stUsingSkill;
+	return m_CurUsingSkill;
 }
 
 FST_AISkill* USkillComponent::GetUseingSkill(ACharacter* pChar)
@@ -143,27 +143,79 @@ FST_AISkill* USkillComponent::GetUseingSkill(ACharacter* pChar)
 	if (false == IsValid(targetSkillComp))
 		return nullptr;
 
-	return targetSkillComp->stUsingSkill;
+	return targetSkillComp->GetUseingSkill();
+}
+
+FST_SkillAnim* USkillComponent::GetSkillAnim(FName Row)
+{
+	if (nullptr == SkillAnimTable)
+		return nullptr;
+
+	FString context = FString::Printf(TEXT("%s not Find"), *Row.ToString());
+	FST_SkillAnim* skillAnim = SkillAnimTable->FindRow<FST_SkillAnim>(Row, context);
+	return skillAnim;
+}
+
+EN_BattleAnimState USkillComponent::CalcDefenseState()
+{
+	float DodgeRate = 100;
+	float BigDodgeRate = 100;
+	float BlockRate = 100;
+	float BigBlockRate = 100;
+	float HitRate = 100;
+	float BigHitRate = 100;
+	float SumRate = DodgeRate + BigDodgeRate + BlockRate + BigBlockRate + HitRate + BigHitRate;
+
+	float randRate = m_RandStream.FRandRange(0.0f, SumRate);
+	randRate -= DodgeRate;
+	if (randRate < 0) return EN_BattleAnimState::Dodge;
+	randRate -= BigDodgeRate;
+	if (randRate < 0) return EN_BattleAnimState::BigDodge;
+	randRate -= BlockRate;
+	if (randRate < 0) return EN_BattleAnimState::Block;
+	randRate -= BigBlockRate;
+	if (randRate < 0) return EN_BattleAnimState::BigBlock;
+	randRate -= HitRate;
+	if (randRate < 0) return EN_BattleAnimState::Hit;
+
+	return EN_BattleAnimState::BigHit;
 }
 
 void USkillComponent::OnEventMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (nullptr == stUsingSkill)
+	if (nullptr == m_CurUsingSkill)
 		return;
 
-	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, bInterrupted = %d"), *stUsingSkill->Name, bInterrupted);
+	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, bInterrupted = %d"), *m_CurUsingSkill->Name, bInterrupted);
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
 
 	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
 	if (false == IsValid(charState))
 		return;
 
-	charState->UseCurSta(stUsingSkill->StaminaUse);
-	stUsingSkill = nullptr;
+	charState->UseCurSta(m_CurUsingSkill->StaminaUse);
+	m_CurUsingSkill = nullptr;
 }
 
-void USkillComponent::OnEventBeginAttack_Implementation()
+void USkillComponent::OnEventBeginAttack_Implementation(ACharacter* pAttackChar)
 {
+	// Use Defence Skill
+	FST_AISkill* pStUseingSkill = GetUseingSkill(pAttackChar);
+
+	if (nullptr == pStUseingSkill)
+		return;
+
+	FST_SkillAnim* pSkillAnim = GetSkillAnim(pStUseingSkill->SkillAnimRow);
+	if (nullptr == pSkillAnim)
+		return;
+
+	m_pOwnChar->StopAnimMontage();
+
+	UAnimMontage* pDefenseStanceAnimMontage = pSkillAnim->GetSkillAnim(EN_BattleAnimState::DefenseStance);
+
+	m_CurUsingSkill = nullptr;
+
+	m_pOwnChar->PlayAnimMontage(pDefenseStanceAnimMontage);
 }
 
 void USkillComponent::OnEventBeforeHitNotify_Implementation(ACharacter* pAttackChar)
@@ -176,22 +228,21 @@ void USkillComponent::OnEventBeforeHitNotify_Implementation(ACharacter* pAttackC
 	if (nullptr == pStUseingSkill)
 		return;
 
-	if (true == pStUseingSkill->DodgeSkill.IsEmpty())
+	FST_SkillAnim* pSkillAnim = GetSkillAnim(pStUseingSkill->SkillAnimRow);
+	if (nullptr == pSkillAnim)
 		return;
 
 	m_pOwnChar->StopAnimMontage();
+	
+	EN_BattleAnimState ResultAnimState = CalcDefenseState();
+	UAnimMontage* pAnimMontage = pSkillAnim->GetSkillAnim(ResultAnimState);
 
-	int32 randNum = m_Stream.RandRange(0, pStUseingSkill->DodgeSkill.Num() - 1);
-	FName skillRowName = pStUseingSkill->DodgeSkill[randNum];
-	FString contextResult;
-	stUsingSkill = DF_Table->FindRow<FST_AISkill>(skillRowName, contextResult);
 
-	if (nullptr == stUsingSkill)
-		return;
+	m_CurUsingSkill = nullptr;
 
 	// FString context = FString::Printf(TEXT("Activated Defence Skill Name = %s"), *skill_InUse->Name);
 	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
-	m_pOwnChar->PlayAnimMontage(stUsingSkill->Anim);
+	m_pOwnChar->PlayAnimMontage(pAnimMontage);
 }
 
 void USkillComponent::OnEventHitNotify_Implementation(ACharacter* pAttackChar)
@@ -200,18 +251,27 @@ void USkillComponent::OnEventHitNotify_Implementation(ACharacter* pAttackChar)
 
 void USkillComponent::SetSkill_AT(TArray<FName> names)
 {
-	if (IsValid(AT_Table))
+	if (IsValid(SkillTable))
 	{
 		for (FName iter : names)
 		{
 			// ContextString : 검색 실패시 출력 메시지
 			FString context = FString::Printf(TEXT("%s not Find"), *iter.ToString());
-			m_Skill_ATs.Push(AT_Table->FindRow<FST_AISkill>(iter, context));
+			m_Skill_ATs.Push(SkillTable->FindRow<FST_AISkill>(iter, context));
 		}
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AT_Table is Empty"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("SkillTable is Empty"));
+		m_pOwnChar->Destroy();
+		return;
+	}
+
+	if (false == IsValid(SkillAnimTable))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("SkillAnimTable is Empty"));
+		m_pOwnChar->Destroy();
+		return;
 	}
 }
 
@@ -243,21 +303,25 @@ void USkillComponent::UseSkill()
 	// FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(m_pOwnChar->GetActorLocation(), pTargetChar->GetActorLocation());
 	// m_pOwnChar->SetActorRotation(LookAtRot);
 
-	int32 randNum = m_Stream.RandRange(0, filterSkills.Num() - 1);
-	stUsingSkill = filterSkills[randNum];
+	int32 randNum = m_RandStream.RandRange(0, filterSkills.Num() - 1);
+	m_CurUsingSkill = filterSkills[randNum];
 	// FString context = FString::Printf(TEXT("Activated Attack Skill Name = %s"), *skill_InUse->Name);
 	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
-	m_pOwnChar->PlayAnimMontage(stUsingSkill->Anim);
+	FST_SkillAnim* pSkillAnim = GetSkillAnim(m_CurUsingSkill->SkillAnimRow);
+	if (nullptr == pSkillAnim)
+		return;
+
+	m_pOwnChar->PlayAnimMontage(pSkillAnim->AttackAnim);
 }
 
 bool USkillComponent::IsActivatedDefenceSkill()
 {
-	return (stUsingSkill->Type == EN_SkillType::Defence);
+	return (m_CurUsingSkill->Type == EN_SkillType::Defence);
 }
 
 bool USkillComponent::IsActivatedAttackSkill()
 {
-	return (stUsingSkill->Type == EN_SkillType::Attack);
+	return (m_CurUsingSkill->Type == EN_SkillType::Attack);
 }
 
 ACharacter* USkillComponent::GetTargetCharacter()
