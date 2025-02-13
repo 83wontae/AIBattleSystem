@@ -110,7 +110,7 @@ void AAIBattleSystemCharacter::PossessedBy(AController* NewController)
 	{
 		// Set Generic TeamId
 		pCtrl->TeamId = m_ID;
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s TeamId = %d"), *pCtrl->GetName(), pCtrl->TeamId));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s TeamId = %d"), *pCtrl->GetName(), pCtrl->TeamId.GetId()));
 	}
 }
 void AAIBattleSystemCharacter::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
@@ -119,7 +119,7 @@ void AAIBattleSystemCharacter::TickAI(AAIBattleController* pCtrl, float DeltaSec
 		return;
 
 	m_AI_State = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %s"), *UEnum::GetValueAsString(m_AI_State)));
 }
 
 //////////////////////////////////////////////////////////////////////////

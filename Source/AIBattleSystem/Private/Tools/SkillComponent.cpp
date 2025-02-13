@@ -49,7 +49,7 @@ void USkillComponent::BeginPlay()
 	{
 		int32 seed = pGM->GetSeed();
 		m_RandStream.Initialize(seed);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("AI Seed = %d"), seed));
+		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("AI Seed = %d"), seed));
 	}
 	else
 	{
@@ -85,7 +85,7 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 		return;
 
 	m_CurAiState = (EN_AIState)pCtrl->GetBlackboardComponent()->GetValueAsEnum("AiState");
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
 	switch (m_CurAiState)
 	{
 	case EN_AIState::Patrol: {
@@ -322,9 +322,9 @@ void USkillComponent::UseSkill()
 	if (nullptr == pSkillAnim)
 		return;
 
-	FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, UseSta = %f"),
-		*m_CurUsingSkill->Name, m_CurUsingSkill->StaminaUse);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
+	// FString context = FString::Printf(TEXT("MontageEnded Skill Name = %s, UseSta = %f"),
+	// 	m_CurUsingSkill->Name, m_CurUsingSkill->StaminaUse);
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, context);
 
 	bool oversta = m_CharState->UseCurSta(m_CurUsingSkill->StaminaUse);
 

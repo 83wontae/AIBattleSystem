@@ -53,7 +53,7 @@ bool AAIBattleController::InitAI()
 	RunBehaviorTree(BehaviorTree);
 
 	EN_AIState aistate = (EN_AIState)GetBlackboardComponent()->GetValueAsEnum("AiState");
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %d"), aistate));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Aistate = %s"), *UEnum::GetValueAsString(aistate)));
 
 	// RunBehaviorTree 후 AIPerception 이벤트에 바인딩을 해줘야함
 	AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &AAIBattleController::EventPerceptionUpdated);
@@ -82,7 +82,7 @@ ETeamAttitude::Type AAIBattleController::GetTeamAttitudeTowards(const AActor& Ot
 
 	// Check If Hostile
 	FGenericTeamId ThisId = GetGenericTeamId();
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("ThisId=%d, OtherId=%d"), ThisId, OtherActorTeamId));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("ThisId=%d, OtherId=%d"), ThisId.GetId(), OtherActorTeamId.GetId()));
 	if (OtherActorTeamId == ThisId)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Friendly"));

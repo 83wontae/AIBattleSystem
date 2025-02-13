@@ -30,8 +30,8 @@ EBTNodeResult::Type UBT_IsInAttackRange::ExecuteTask(UBehaviorTreeComponent& Own
 		return EBTNodeResult::Failed;
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, 
-		FString::Printf(TEXT("TargetActor is %s"), *AActor::GetDebugName(pTargetActor)));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, 
+	//	FString::Printf(TEXT("TargetActor is %s"), *AActor::GetDebugName(pTargetActor)));
 
 	auto length = FVector::Distance(pTargetActor->GetActorLocation(), Enemy->GetActorLocation());
 	if(100 < length)
