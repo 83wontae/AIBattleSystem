@@ -146,8 +146,6 @@ public:
 public:
 	void TickAI(class AAIBattleController* pCtrl, float DeltaSeconds);
 
-	bool IsUseingDefenceSkill(ACharacter* pChar);
-
 	FST_AISkill* GetUseingSkill();
 
 	FST_AISkill* GetUseingSkill(ACharacter* pChar);
@@ -185,12 +183,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void UseSkill();
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	bool IsActivatedDefenceSkill();
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	bool IsActivatedAttackSkill();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	ACharacter* GetTargetCharacter();

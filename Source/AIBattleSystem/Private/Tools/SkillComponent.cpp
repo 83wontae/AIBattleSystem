@@ -111,19 +111,6 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 	}
 }
 
-bool USkillComponent::IsUseingDefenceSkill(ACharacter* pChar)
-{
-	// 상대방이 회피중인지 채크
-	USkillComponent* targetSkillComp = pChar->FindComponentByClass<USkillComponent>();
-	if (false == IsValid(targetSkillComp))
-		return false;
-
-	if (true == targetSkillComp->IsActivatedDefenceSkill())
-		return false;
-
-	return true;
-}
-
 FST_AISkill* USkillComponent::GetUseingSkill()
 {
 	return m_CurUsingSkill;
@@ -333,16 +320,6 @@ void USkillComponent::UseSkill()
 
 	// 공격 주도권 처리
 	AttackInitiative++;
-}
-
-bool USkillComponent::IsActivatedDefenceSkill()
-{
-	return (m_CurUsingSkill->Type == EN_SkillType::Defence);
-}
-
-bool USkillComponent::IsActivatedAttackSkill()
-{
-	return (m_CurUsingSkill->Type == EN_SkillType::Attack);
 }
 
 ACharacter* USkillComponent::GetTargetCharacter()
