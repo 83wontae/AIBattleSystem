@@ -113,7 +113,7 @@ void USkillComponent::TickAI(AAIBattleController* pCtrl, float DeltaSeconds)
 
 bool USkillComponent::IsUseingDefenceSkill(ACharacter* pChar)
 {
-	// »ó´ë¹æÀÌ È¸ÇÇÁßÀÎÁö Ã¤Å©
+	// ìƒëŒ€ë°©ì´ íšŒí”¼ì¤‘ì¸ì§€ ì±„í¬
 	USkillComponent* targetSkillComp = pChar->FindComponentByClass<USkillComponent>();
 	if (false == IsValid(targetSkillComp))
 		return false;
@@ -254,7 +254,7 @@ void USkillComponent::SetSkill_AT(TArray<FName> names)
 	{
 		for (FName iter : names)
 		{
-			// ContextString : °Ë»ö ½ÇÆÐ½Ã Ãâ·Â ¸Þ½ÃÁö
+			// ContextString : ê²€ìƒ‰ ì‹¤íŒ¨ì‹œ ì¶œë ¥ ë©”ì‹œì§€
 			FString context = FString::Printf(TEXT("%s not Find"), *iter.ToString());
 			m_Skill_ATs.Push(SkillTable->FindRow<FST_AISkill>(iter, context));
 		}
@@ -280,19 +280,19 @@ void USkillComponent::UseSkill()
 	if (false == IsValid(pTargetChar))
 		return;
 
-	// ÀûÀÌ °ø°ÝÇÏ°í ÀÖÀ¸¸é °°ÀÌ °ø°Ý ¾ÈÇÔ
+	// ì ì´ ê³µê²©í•˜ê³  ìžˆìœ¼ë©´ ê°™ì´ ê³µê²© ì•ˆí•¨
 	FST_AISkill* pStUseingSkill = GetUseingSkill(pTargetChar);
 	if (pStUseingSkill)
 		return;
 
-	// °ø°Ý ÁÖµµ±Ç Ã³¸®
+	// ê³µê²© ì£¼ë„ê¶Œ ì²˜ë¦¬
 	if (AttackInitiative > 0)
 	{
 		AttackInitiative--;
 		return;
 	}
 
-	// FindComponentByClass ´Â Native ÄÚµå
+	// FindComponentByClass ëŠ” Native ì½”ë“œ
 	UCharStateComponent* charState = m_pOwnChar->FindComponentByClass<UCharStateComponent>();
 	if (false == IsValid(charState))
 		return;
@@ -331,8 +331,8 @@ void USkillComponent::UseSkill()
 	m_pOwnChar->PlayAnimMontage(pSkillAnim->AttackAnim);
 	m_CurAnimState = EN_BattleAnimState::Attack;
 
-	// °ø°Ý ÁÖµµ±Ç Ã³¸®
-	AttackInitiative++;
+        return (m_CurUsingSkill != nullptr && m_CurUsingSkill->Type == EN_SkillType::Defence);
+        return (m_CurUsingSkill != nullptr && m_CurUsingSkill->Type == EN_SkillType::Attack);
 }
 
 bool USkillComponent::IsActivatedDefenceSkill()
